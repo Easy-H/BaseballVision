@@ -1,6 +1,17 @@
-# BaseballVision
+# ⚾️ BaseballVision
 - 컴퓨터 비전 기술을 이용하여 야구 동작(투구, 타격)의 신체 정보를 수집하는 프로젝트입니다.
 - 이 프로젝트는 컴퓨터 비전 기술을 활용하여 야구 선수들의 동작을 정밀하게 분석하고, 이를 통해 개인의 스윙/투구 폼 개선, 잠재력 향상을 돕는 것을 목표로 합니다.
+
+## 🎉 결과물 (Results)
+### ✍🏻 입력 (Input)
+#### 원본 영상
+![원본 영상](readme_image/이지헌.gif)
+
+### 🖨️ 출력 (Output)
+#### 신체 본 영상
+![신체 본 영상](readme_image/이지헌_bone_output.gif)
+#### 신체 본, 원본 함성 영상
+![신체 본, 원본 합성 영상](readme_image/이지헌_combined_output.gif)
 
 ## 🛠️ 개발 환경 (Development Environment)
 
@@ -53,14 +64,3 @@
 - [ ] Bone 작업물 c3d 출력
 - [ ] Bone 작업물 3D 영상 출력
 - [ ] 기타 후처리 작업
-
-## 🎉 결과물 (Results)
-### ✍🏻 입력 (Input)
-- 원본 영상
-![원본 영상](readme_image/이지헌.gif)
-
-### 🖨️ 출력 (Output)
-- 신체 본 영상
-![신체 본 영상](readme_image/이지헌_bone_output.gif)
-- 신체 본, 원본 함성 영상
-![신체 본, 원본 합성 영상](readme_image/이지헌_combined_output.gif)
