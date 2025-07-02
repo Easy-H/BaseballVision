@@ -54,17 +54,10 @@
 - [ ] Bone 작업물 3D 영상 출력
 - [ ] 기타 후처리 작업
 
-## 결과물 (Results)
-### 입력
-<video width="320" height="240" controls>
-    <source src="raw_data/이지헌.mov"  type="video/mov">
-</video>
-<video source=""></video>
+## 🎉 결과물 (Results)
+### ✍🏻 입력 (Input)
+![투구폼 영상](raw_data/readme_image/이지헌.gif)
 
-### 출력
-<video width="320" height="240" controls>
-    <source src="/result_data/이지헌_combined_output.mp4"  type="video/mp4">
-</video>
-<video width="320" height="240" controls>
-    <source src="result_data/이지헌_bone_output.mp4"  type="video/mp4">
-</video>
+### 🖨️ 출력 (Output)
+![신체 본 영상](raw_data/readme_image/이지헌_bone_output.gif)
+![신체 본, 원본 합성 영상](raw_data/readme_image/이지헌_combined_output.gif)
