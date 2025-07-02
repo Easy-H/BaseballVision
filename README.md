@@ -56,8 +56,11 @@
 
 ## 🎉 결과물 (Results)
 ### ✍🏻 입력 (Input)
-![투구폼 영상](raw_data/readme_image/이지헌.gif)
+- 원본 영상
+![원본 영상](readme_image/이지헌.gif)
 
 ### 🖨️ 출력 (Output)
-![신체 본 영상](raw_data/readme_image/이지헌_bone_output.gif)
-![신체 본, 원본 합성 영상](raw_data/readme_image/이지헌_combined_output.gif)
+- 신체 본 영상
+![신체 본 영상](readme_image/이지헌_bone_output.gif)
+- 신체 본, 원본 함성 영상
+![신체 본, 원본 합성 영상](readme_image/이지헌_combined_output.gif)
