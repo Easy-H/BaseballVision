@@ -1,7 +1,9 @@
 import mediapipe as mp
 import baseball_vision.angle_calc as ac
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+import cv2
 
 def get_joints(landmarks):
      return { "R_shoulder": landmarks[mp.solutions.pose.PoseLandmark.RIGHT_SHOULDER],
@@ -18,24 +20,24 @@ def get_joints(landmarks):
                 "L_ankle": landmarks[mp.solutions.pose.PoseLandmark.LEFT_ANKLE],
                 "R_pinky_tip": landmarks[mp.solutions.pose.PoseLandmark.RIGHT_INDEX],
                 "L_pinky_tip": landmarks[mp.solutions.pose.PoseLandmark.LEFT_INDEX]}
-
+    
 class AnalysisTool:
     def __init__(self):
-        self.results = []
+        self.df_results = pd.DataFrame()
     def calc(self, landmarks):
         result = self.calc_joints(get_joints(landmarks))
-        self.results.append(result)
+        self.df_results = pd.concat([self.df_results, pd.DataFrame([result])], ignore_index=True)
         return result
     def calc_joints(self, joints):
         pass
     def skip(self):
-        self.results.append([])
+        self.df_results = pd.concat([self.df_results, pd.DataFrame([{}])], ignore_index=True)
     def run(self):
-        self.df_results = pd.DataFrame(self.results)
+        pass
     def save(self, output_name):
         self.df_results.to_csv(output_name + ".csv", index=True)
-    def show_dataframe(self):
-        print(self.df_results)
+    def get_dataframe(self):
+        return self.df_results
     def show_graph(self, label=[]):
         remove_idx = []
         for i in range(len(label)):
@@ -60,6 +62,62 @@ class AnalysisTool:
         plt.grid(True)
         plt.tight_layout()
         plt.show()
+        
+    def create_graph_image(self, current_frame_idx: int, 
+                           total_frames: int, labels: list, width, height,
+                           graph_title="Joint Angles Over Time", y_label="Degree"):
+        
+        # df_results가 비어있으면 빈 이미지 반환 또는 오류 처리
+        if self.df_results.empty:
+            return np.zeros((200, 600, 3), dtype=np.uint8) # 예시 크기, 검정색 이미지
+            
+        dpi = 100 # 그래프 해상도 (조절 가능)
+        fig_width = width / dpi
+        fig_height = height / dpi
+        
+        fig, ax = plt.subplots(figsize=(6, 2), dpi=100) 
+        
+        # 현재 프레임까지의 데이터만 사용
+        data_to_plot = self.df_results.iloc[:current_frame_idx + 1]
+    
+        for label in labels:
+            if label in data_to_plot.columns:
+                ax.plot(data_to_plot.index, data_to_plot[label], label=label, linewidth=.5)
+    
+        # 현재 프레임 위치 강조 (마지막 데이터 포인트)
+        if current_frame_idx < len(self.df_results) and not self.df_results.empty:
+            for label in labels:
+                if label in self.df_results.columns:
+                    # 마지막 유효한 데이터 포인트에 마커 표시
+                    if current_frame_idx < len(self.df_results[label]): # Ensure index exists
+                        ax.plot(current_frame_idx, self.df_results[label].iloc[current_frame_idx], 'o', markersize=4, color='red')
+    
+        ax.set_title(graph_title, fontsize=10)
+        ax.set_xlabel("Frame Index", fontsize=8)
+        ax.set_ylabel(y_label, fontsize=8)
+        
+        # X축 범위 고정 (전체 영상 길이에 맞춰)
+        ax.set_xlim(0, total_frames - 1)
+        
+        # Y축 범위는 데이터에 따라 동적으로 설정하거나, 적절한 고정 값 사용 (예: ax.set_ylim(-180, 180))
+        # ax.set_ylim(df_results[labels].min().min() - 10, df_results[labels].max().max() + 10) # 데이터 기반 동적 범위
+    
+        ax.tick_params(axis='both', which='major', labelsize=7)
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=6, frameon=False) # 범례 위치 조정
+        ax.grid(True, linestyle=':', alpha=0.6)
+        plt.tight_layout(rect=[0, 0, 0.85, 1]) # 범례 공간 확보
+        
+        # 그래프 이미지 변환 후 리턴
+        fig.canvas.draw()
+        actual_width, actual_height = fig.canvas.get_width_height()
+            
+        graph_image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+        # 가져온 실제 폭과 높이를 사용하여 reshape합니다.
+        graph_image = graph_image.reshape(actual_height, actual_width, 3) 
+        graph_image = cv2.cvtColor(graph_image, cv2.COLOR_RGB2BGR)
+
+        plt.close(fig)
+        return graph_image
 
 class PitcherAnalysisTool(AnalysisTool):
     def calc_joints(self, joints):
