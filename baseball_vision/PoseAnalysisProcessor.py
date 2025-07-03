@@ -1,16 +1,11 @@
-import baseball_vision.draw_bone as db
-import baseball_vision.filter as filter
-import baseball_vision.LandmarkKalmanFilter as LandmarkKalmanFilter
-import baseball_vision.draw_bone as db
+import baseball_vision.draw_image as di
+from baseball_vision.LandmarkKalmanFilter import LandmarkKalmanFilter
 import config
-import cv2
+import mediapipe as mp
 import numpy as np
+import cv2
 import os
 import sys
-import mediapipe as mp
-import c3d # C3D library import
-import open3d as o3d # Open3D 임포트
-import time # time 모듈 임포트
 
 class PoseAnalysisProcessor:
     """
@@ -34,7 +29,7 @@ class PoseAnalysisProcessor:
             min_detection_confidence=config.MIN_DETECTION_CONFIDENCE,
             min_tracking_confidence=config.MIN_TRACKING_CONFIDENCE
         )
-        self.kalman_filter_processor = LandmarkKalmanFilter.LandmarkKalmanFilter(
+        self.kalman_filter_processor = LandmarkKalmanFilter(
             num_landmarks=len(mp.solutions.pose.PoseLandmark),
             process_noise_std=config.PROCESS_NOISE_STD,
             measurement_noise_std=config.MEASUREMENT_NOISE_STD
@@ -143,15 +138,14 @@ class PoseAnalysisProcessor:
 
                 # Draw 2D pose on the frame using original MediaPipe landmarks for drawing consistency
                 # (filtered landmarks are used for angle calculation)
-                frame_with_pose = db.draw_pose_on_frame(frame_with_pose, results.pose_landmarks)
+                frame_with_pose = di.draw_pose_on_frame(frame_with_pose, results.pose_landmarks)
                 
                 # Calculate and display angles using the analysis tool function
                 angle_strings = analysis_tool_func(filtered_landmarks_array) 
             else:
                 angle_strings = []
-
             
-            final_pose_only_frame = filter.only_bone(frame, frame_with_pose)
+            final_pose_only_frame = di.draw_diff(frame, frame_with_pose)
             
             for i, (name, value) in enumerate(angle_strings):
                 cv2.putText(frame_with_pose, f"{name}: {value}", 

@@ -1,11 +1,10 @@
-import cv2
-import mediapipe as mp
 import open3d as o3d # Open3D 임포트
-import numpy as np
 import config
 import time
+import numpy as np
+import c3d # C3D library import
 
-def landmarks_animation(all_frames_3d_landmarks, connections, fps):
+def show_3d_video(all_frames_3d_landmarks, fps):
     """
     수집된 3D 랜드마크 데이터를 Open3D를 사용하여 애니메이션으로 시각화합니다.
 
@@ -36,7 +35,7 @@ def landmarks_animation(all_frames_3d_landmarks, connections, fps):
     # 라인셋 객체 생성 (Open3D는 라인을 나타내기 위해 [point_idx1, point_idx2] 형태의 리스트를 원함)
     lines = []
     line_colors = [] # 각 연결선에 대한 색상 리스트
-    for c_tuple in connections:
+    for c_tuple in config.mp_pose.POSE_CONNECTIONS:
         lines.append([c_tuple[0], c_tuple[1]]) # 연결선의 점 인덱스 추가
         
         # 미리 정의된 CONNECTIONS_COLORS 딕셔너리에서 색상을 찾아 적용
@@ -77,8 +76,6 @@ def landmarks_animation(all_frames_3d_landmarks, connections, fps):
 
     print("3D 시각화를 시작합니다. 창을 닫으면 종료됩니다.")
     while True:
-        if input("Y/N") == "N":
-            break
         for i, frame_landmarks_3d in enumerate(all_frames_3d_landmarks):
             # 포인트 클라우드와 라인셋의 점 데이터를 현재 프레임의 랜드마크로 업데이트
             pcd.points = o3d.utility.Vector3dVector(frame_landmarks_3d)
@@ -95,82 +92,36 @@ def landmarks_animation(all_frames_3d_landmarks, connections, fps):
     
             # 프레임 속도에 맞춰 잠시 대기
             time.sleep(delay_per_frame)
+        input_value = input("Y/N")
+        if input_value == "N" or input_value == "n":
+            break
 
     vis.destroy_window() # 모든 프레임을 표시한 후 시각화 창 닫기
     print("3D 시각화가 종료되었습니다.")
 
+def export_to_c3d(output_filename, all_frames_3d_landmarks, fps):
+    if not all_frames_3d_landmarks:
+        print("내보낼 3D 랜드마크 데이터가 없습니다.")
+        return
 
-def draw_landmarks_custom(image, landmarks, image_width, image_height):
-    """
-    Draws custom-styled pose landmarks on the image.
-    - Simplifies face to a single nose node.
-    - Draws other body points as small gray dots.
+    num_frames = len(all_frames_3d_landmarks)
+    num_markers = all_frames_3d_landmarks[0].shape[0]
 
-    Args:
-        image (np.array): The OpenCV BGR image frame to draw on.
-        landmarks (mediapipe.framework.formats.landmark_pb2.NormalizedLandmarkList):
-                    The pose landmarks detected by MediaPipe.
-        image_width (int): Width of the image.
-        image_height (int): Height of the image.
-    """
-    for idx, landmark in enumerate(landmarks.landmark):
-        # Only draw if landmark visibility is good
-        if landmark.visibility < config.MIN_DRAW_VISIBILITY:
-            continue
-        
-        center_coordinates = (int(landmark.x * image_width), int(landmark.y * image_height))
+    points_data_all_frames = np.array(all_frames_3d_landmarks) * 1000.0 # meters to millimeters
 
-        if idx == mp.solutions.pose.PoseLandmark.NOSE.value: # Nose: single face node
-            cv2.circle(image, center_coordinates, 5, (255, 255, 255), -1) # White circle
-        elif 1 <= idx <= 10: # Other facial landmarks (eyes, ears, mouth): don't draw
-            pass
-        else: # Body, arm, leg landmarks: small gray dot
-            cv2.circle(image, center_coordinates, 2, (100, 100, 100), -1)
+    writer = c3d.Writer()
 
-def draw_connections_custom(image, landmarks, image_width, image_height):
-    """
-    Draws custom color-coded pose connections (bones) on the image.
+    for frame_idx in range(num_frames):
+        current_frame_points_3d = points_data_all_frames[frame_idx]
 
-    Args:
-        image (np.array): The OpenCV BGR image frame to draw on.
-        landmarks (mediapipe.framework.formats.landmark_pb2.NormalizedLandmarkList):
-                    The pose landmarks detected by MediaPipe.
-        image_width (int): Width of the image.
-        image_height (int): Height of the image.
-    """
-    for connection in mp.solutions.pose.POSE_CONNECTIONS:
-        idx1, idx2 = connection
-        
-        if landmarks.landmark[idx1].visibility < config.MIN_DRAW_VISIBILITY or landmarks.landmark[idx2].visibility < config.MIN_DRAW_VISIBILITY:
-            continue
-        
-        # Get color for the connection from the predefined map
-        color = config.CONNECTIONS_COLORS.get(connection, None)
-        if color is None: # Check if tuple order is reversed in map
-            color = config.CONNECTIONS_COLORS.get((idx2, idx1), None)
+        residuals_column = np.zeros((num_markers, 1), dtype=np.float32)
 
-        if color is not None:
-            point1 = (int(landmarks.landmark[idx1].x * image_width), int(landmarks.landmark[idx1].y * image_height))
-            point2 = (int(landmarks.landmark[idx2].x * image_width), int(landmarks.landmark[idx2].y * image_height))
-            cv2.line(image, point1, point2, color, 2) # Line thickness 2
+        points_with_residuals = np.hstack((current_frame_points_3d, residuals_column))
+        points_with_residuals = np.hstack((points_with_residuals, residuals_column))
 
-def draw_pose_on_frame(frame, pose_landmarks):
-    """
-    Orchestrates drawing pose landmarks and connections on a frame with custom styling.
+        writer.add_frames([(points_with_residuals, np.array([]))])
 
-    Args:
-        frame (np.array): The OpenCV BGR image frame.
-        pose_landmarks (mediapipe.framework.formats.landmark_pb2.NormalizedLandmarkList):
-                        The pose landmarks detected by MediaPipe.
+    with open(output_filename, 'wb') as handle:
+        writer.write(handle)
 
-    Returns:
-        np.array: The frame with the custom-drawn pose.
-    """
-    frame_with_pose = frame.copy()
-    h, w, _ = frame.shape
-    
-    # Call functions to draw landmarks and connections
-    draw_landmarks_custom(frame_with_pose, pose_landmarks, w, h)
-    draw_connections_custom(frame_with_pose, pose_landmarks, w, h)
-    
-    return frame_with_pose
+    print(f"총 {num_frames} 프레임을 {output_filename}으로 성공적으로 내보냈습니다.")

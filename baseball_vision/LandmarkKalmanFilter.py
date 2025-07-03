@@ -2,7 +2,8 @@ from filterpy.kalman import KalmanFilter
 import numpy as np
 
 class LandmarkKalmanFilter:
-    def __init__(self, num_landmarks=33, dim_state=6, dim_measurement=3, dt=1.0, process_noise_std=0.01, measurement_noise_std=0.1):
+    def __init__(self, num_landmarks=33, dim_state=6, dim_measurement=3, dt=1.0,
+                 process_noise_std=0.01, measurement_noise_std=0.1):
         # dim_state: 상태 벡터의 차원 (x, y, z, vx, vy, vz) = 6
         # dim_measurement: 측정 벡터의 차원 (x, y, z) = 3
         # dt: 시간 간격 (여기서는 프레임 간 간격, 1로 가정)

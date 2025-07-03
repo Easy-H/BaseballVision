@@ -24,7 +24,7 @@
     - `open3d`: 3D 포즈 데이터 및 관절 시각화 (동작 3D 영상 출력)
     - `c3d`: 3D 모션 데이터 표준 포맷인 C3D 파일 처리 (모션 데이터 출력)
     - `filterpy`: (예: 관절 각도 데이터의 노이즈 제거 및 평활화를 위한 칼만 필터 등)
-    - `dlib`, `face_recognition`, `cmake`, `os`, `sys`, `time`: 기타 유틸리티에 사용
+    - `dlib`, `cmake`, `os`, `sys`, `time`: 기타 유틸리티에 사용
 
 ## 🚀 사용 방법 (How to Run)
 

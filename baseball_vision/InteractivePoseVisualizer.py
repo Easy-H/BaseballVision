@@ -3,13 +3,12 @@ import numpy as np
 import config
 
 class InteractivePoseVisualizer:
-    def __init__(self, all_frames_3d_landmarks, connections, initial_fps):
+    def __init__(self, all_frames_3d_landmarks, initial_fps):
         if not all_frames_3d_landmarks:
             raise ValueError("시각화할 3D 랜드마크 데이터가 없습니다.")
 
         self.all_frames_3d_landmarks = all_frames_3d_landmarks
         self.num_frames = len(all_frames_3d_landmarks)
-        self.connections = connections
 
         self.current_frame_idx = 0
         self.is_playing = False
@@ -76,7 +75,7 @@ class InteractivePoseVisualizer:
 
         lines = []
         line_colors = []
-        for c_tuple in self.connections:
+        for c_tuple in config.mp_pose.POSE_CONNECTIONS:
             lines.append([c_tuple[0], c_tuple[1]])
             mapped_color = None
             for conn_key, color_rgb in config.CONNECTIONS_COLORS.items():
