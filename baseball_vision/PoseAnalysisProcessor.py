@@ -35,7 +35,7 @@ class PoseAnalysisProcessor:
             measurement_noise_std=config.MEASUREMENT_NOISE_STD
         )
 
-    def process_video(self, video_path, video_prename, analysis_tool_func):
+    def process_video(self, video_path, video_prename, analysis_tool):
         """
         Processes a video file to perform pose estimation, filtering, and analysis.
 
@@ -68,7 +68,7 @@ class PoseAnalysisProcessor:
         bone_output_path = os.path.join(self.output_dir, video_prename + '_bone_output.mp4')
 
         combined_out = cv2.VideoWriter(combined_output_path, fourcc, fps, (frame_width, frame_height))
-        bone_out = cv2.VideoWriter(bone_output_path, fourcc, fps, (frame_width, frame_height))
+        bone_out = cv2.VideoWriter(bone_output_path, fourcc, fps, (frame_width, frame_height))\
 
         if not combined_out.isOpened():
             print(f"오류: 출력 비디오 파일 '{combined_output_path}'를 생성할 수 없습니다. 코덱 또는 권한을 확인하세요.")
@@ -141,19 +141,22 @@ class PoseAnalysisProcessor:
                 frame_with_pose = di.draw_pose_on_frame(frame_with_pose, results.pose_landmarks)
                 
                 # Calculate and display angles using the analysis tool function
-                angle_strings = analysis_tool_func(filtered_landmarks_array) 
+                tool_output = analysis_tool.calc(filtered_landmarks_array) 
             else:
-                angle_strings = []
+                tool_output = []
+                analysis_tool.skip()
             
             final_pose_only_frame = di.draw_diff(frame, frame_with_pose)
-            
-            for i, (name, value) in enumerate(angle_strings):
-                cv2.putText(frame_with_pose, f"{name}: {value}", 
-                            (10, frame.shape[0] - (len(angle_strings) - 1 - i) * 20 - 10), # Adjust Y position
+
+            i = 0
+            for (name, value) in tool_output.items():
+                cv2.putText(frame_with_pose, f"{name}: {str(value)}", 
+                            (10, frame.shape[0] - (len(tool_output) - 1 - i) * 20 - 10), # Adjust Y position
                             cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1, cv2.LINE_AA)
-                cv2.putText(final_pose_only_frame, f"{name}: {value}", 
-                            (10, frame.shape[0] - (len(angle_strings) - 1 - i) * 20 - 10), # Adjust Y position
+                cv2.putText(final_pose_only_frame, f"{name}: {str(value)}", 
+                            (10, frame.shape[0] - (len(tool_output) - 1 - i) * 20 - 10), # Adjust Y position
                             cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1, cv2.LINE_AA)
+                i += 1
                 
             cv2.putText(frame_with_pose, str(frame_count), (10, 50), # Adjust Y position
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1, cv2.LINE_AA)
@@ -167,6 +170,7 @@ class PoseAnalysisProcessor:
         combined_out.release()
         bone_out.release()
         cap.release()
+        analysis_tool.run()
         self.pose_detector.close() # Close MediaPipe pose detector
 
         return all_frames_filtered_3d_landmarks, fps
