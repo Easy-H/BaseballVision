@@ -11,9 +11,10 @@ import threading
 import cv2 # OpenCV 라이브러리
 from PIL import Image, ImageTk # Pillow 라이브러리
 import sys # sys 모듈 임포트
+import platform
 
 class StdoutRedirector(object):
-    def __init__(self, text_widget, update_interval_ms=100, max_lines=10):
+    def __init__(self, text_widget, update_interval_ms=1000, max_lines=10):
         self.text_widget = text_widget
         self.buffer = [] # (string, should_delete_last_line_flag) 튜플 저장
         self.lock = threading.Lock()
@@ -119,11 +120,13 @@ class VideoProcessorApp:
         self.video_path = None
         self.cap = None # OpenCV VideoCapture 객체
         self.playing_video = False # 동영상 재생 상태 플래그
-        self.tool = bvtool.PitcherAnalysisTool(["Pelvis", "Body Twist"])
-        
         # UI 요소 생성
         self._create_widgets()
         sys.stdout = StdoutRedirector(self.output_text)
+        self.tool = bvtool.PitcherAnalysisTool(["Pelvis", "Body Twist"])
+        
+        print(f"환경:{platform.architecture()}")
+        print("준비되었습니다. '비디오 선택' 버튼을 눌러주세요.\n")
 
     def _create_widgets(self):
         # 1. 컨트롤 프레임 (버튼 및 입력)
@@ -144,7 +147,6 @@ class VideoProcessorApp:
         # 2. 프로세스 출력 텍스트 영역
         self.output_text = scrolledtext.ScrolledText(self.master, wrap=tk.WORD, height=10)
         self.output_text.pack(fill="x", padx=10, pady=5)
-        self.output_text.insert(tk.END, "준비되었습니다. '비디오 선택' 버튼을 눌러주세요.\n")
         self.output_text.config(state=tk.DISABLED) # 초기에는 읽기 전용
         
         # 3. 추가 작업 버튼 프레임 (초기 비활성화)
@@ -173,8 +175,8 @@ class VideoProcessorApp:
         if self.cap:
             self.cap.release() # 기존 비디오 캡처 객체 해제
             self.cap = None
-        self.display_label.config(image='') # 화면 초기화
-        self.display_label.image = None
+
+        default_file_path = self.video_path
 
         file_path = filedialog.askopenfilenames(
             title="동영상 파일 선택",
@@ -185,13 +187,15 @@ class VideoProcessorApp:
         )
         if file_path:
             self.video_path = file_path
-            self.video_path_label.config(text=f"선택된 비디오: {file_path}")
             self._update_output(f"'{file_path}' 파일이 선택되었습니다.")
-            # 비디오 처리 시작 (별도 스레드에서 실행)
+            self.video_path_label.config(text=f"선택된 비디오: {self.video_path}")
+            self.display_label.config(image='') # 화면 초기화
+            self.tool = bvtool.PitcherAnalysisTool(["Pelvis", "Body Twist"])
+            self.display_label.image = None
         else:
-            self.video_path = None
-            self.video_path_label.config(text="선택된 비디오: 없음")
+            self.video_path = default_file_path
             self._update_output("비디오 선택이 취소되었습니다.")
+            self.video_path_label.config(text=f"선택된 비디오: {self.video_path}")
     def process_video(self):
         threading.Thread(target=self.process_video_async, daemon=True).start()
 

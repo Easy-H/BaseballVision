@@ -92,8 +92,6 @@ class MediaPipePoseDetector(PoseDetector):
             process_noise_std=config.PROCESS_NOISE_STD,
             measurement_noise_std=config.MEASUREMENT_NOISE_STD
         )
-        
-        self.all_frames_processed_landmarks_3d = []
     
     def process(self, images: list, fusion_method: str = 'weighted_average'):
         """
@@ -177,10 +175,6 @@ class MediaPipePoseDetector(PoseDetector):
         else:
             processed_landmarks_3d = fused_landmarks_3d
         
-        self.all_frames_processed_landmarks_3d.append(processed_landmarks_3d)
-        
         return processed_landmarks_3d, all_raw_landmarks_2d, all_visibility_scores
-    def get_all_frames_landmarks_3d(self):
-        return self.all_frames_processed_landmarks_3d
     def close(self):
         self.pose_detector.close()

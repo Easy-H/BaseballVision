@@ -28,6 +28,9 @@ class PoseAnalysisProcessor:
         self.frame_width = 0
         self.frame_height = 0
         self.frame_count = 0
+        self.landmarks_data_dir = os.path.join(self.output_dir, ".temp_landmarks")
+        os.makedirs(self.landmarks_data_dir, exist_ok=True)
+
 
     def _initialize_video_capture_and_writers(self, video_path, video_prename, graph_height):
         """
@@ -55,7 +58,7 @@ class PoseAnalysisProcessor:
         self.frame_height = int(caps[0].get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = caps[0].get(cv2.CAP_PROP_FPS)
         self.total_frames = int(caps[0].get(cv2.CAP_PROP_FRAME_COUNT))
-
+        
         fourcc = cv2.VideoWriter_fourcc(*'mp4v') # Codec for .mp4
 
         self.combined_output_path = os.path.join(self.output_dir, video_prename + '_combined_output.mp4')
@@ -144,7 +147,13 @@ class PoseAnalysisProcessor:
             frame_rgbs.append(frame_rgb)
             
         landmarks_3d, landmarks, visibility_scores = self.pose_detector.process(frame_rgbs)
-        
+
+        if landmarks_3d is not None:
+                # 각 프레임의 3D 랜드마크를 별도의 .npy 파일로 저장
+                np.save(os.path.join(self.landmarks_data_dir,
+                                     f"frame_{self.frame_count-1:05d}.npy"), # 0-색인 프레임
+                        landmarks_3d)
+                
         for i in range(len(frame)):
             frame_rgbs[i].flags.writeable = True
 
@@ -177,7 +186,6 @@ class PoseAnalysisProcessor:
                    Returns empty list and 0.0 if processing fails.
         """
         print("MediaPipe Pose를 초기화합니다...")
-
         caps, combined_out, bone_out = \
             self._initialize_video_capture_and_writers(video_path, video_prename, graph_height)
 
@@ -201,6 +209,7 @@ class PoseAnalysisProcessor:
                     sys.stdout.write(f"\r처리 중: 100.00% ({self.frame_count}/{self.frame_count} 프레임)\n")
                     sys.stdout.flush()
                 break
+                
 
             self.frame_count += 1
             # Display progress

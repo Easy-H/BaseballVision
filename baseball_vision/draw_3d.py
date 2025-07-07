@@ -3,8 +3,21 @@ import config
 import time
 import numpy as np
 import c3d # C3D library import
+import os # 경로 조작을 위해 os 임포트
 
-def show_3d_video(all_frames_3d_landmarks, fps):
+def _landmark_generator(landmarks_data_dir, num_frames):
+    """
+    디스크에서 프레임별로 3D 랜드마크 데이터를 생성하는 제너레이터입니다.
+    """
+    for i in range(num_frames):
+        file_path = os.path.join(landmarks_data_dir, f"frame_{i:05d}.npy")
+        if os.path.exists(file_path):
+            yield np.load(file_path)
+        else:
+            print(f"경고: 랜드마크 파일을 찾을 수 없습니다: {file_path}. 프레임을 건너뜁니다.")
+            yield None # 또는 적절하게 오류 처리
+
+def show_3d_video(landmarks_data_dir, total_frames, fps):
     """
     수집된 3D 랜드마크 데이터를 Open3D를 사용하여 애니메이션으로 시각화합니다.
 
@@ -15,16 +28,20 @@ def show_3d_video(all_frames_3d_landmarks, fps):
                             MediaPipe의 PoseLandmark.value 인덱스를 사용.
         fps (float): 시각화 속도를 조절하기 위한 초당 프레임 수.
     """
-    if not all_frames_3d_landmarks:
+    if not os.path.isdir(landmarks_data_dir) or total_frames == 0:
         print("시각화할 3D 랜드마크 데이터가 없습니다.")
         return
 
-    # Open3D는 기본적으로 밀리미터 단위를 선호하지만, 여기서는 MediaPipe의 미터 단위를 그대로 사용합니다.
-    # 필요하다면 여기서 * 1000.0 하여 밀리미터로 변환할 수 있습니다.
-    # 예를 들어: initial_landmarks = all_frames_3d_landmarks[0] * 1000.0
+    landmarks_iterator = _landmark_generator(landmarks_data_dir, total_frames)
 
-    # 첫 프레임의 랜드마크로 초기 포인트 클라우드 및 라인셋 생성
-    initial_landmarks = all_frames_3d_landmarks[0] # (num_markers, 3) 형태
+    # 초기화를 위해 첫 프레임 가져오기
+    try:
+        initial_landmarks = next(landmarks_iterator)
+        while initial_landmarks is None: # 처음 몇 프레임이 누락된 경우 건너뛰기
+            initial_landmarks = next(landmarks_iterator)
+    except StopIteration:
+        print("시각화를 초기화할 유효한 랜드마크 데이터를 찾을 수 없습니다.")
+        return
 
     # 포인트 클라우드 객체 생성
     pcd = o3d.geometry.PointCloud()
@@ -99,24 +116,38 @@ def show_3d_video(all_frames_3d_landmarks, fps):
     vis.destroy_window() # 모든 프레임을 표시한 후 시각화 창 닫기
     print("3D 시각화가 종료되었습니다.")
 
-def export_to_c3d(output_filename, all_frames_3d_landmarks, fps):
-    if not all_frames_3d_landmarks:
+def export_to_c3d(output_filename, landmarks_data_dir, total_frames, fps):
+    if not os.path.isdir(landmarks_data_dir) or total_frames == 0:
         print("내보낼 3D 랜드마크 데이터가 없습니다.")
         return
 
-    num_frames = len(all_frames_3d_landmarks)
-    num_markers = all_frames_3d_landmarks[0].shape[0]
-
-    points_data_all_frames = np.array(all_frames_3d_landmarks) * 1000.0 # meters to millimeters
+    num_frames = total_frames # 프로세서에서 전달된 total_frames 사용
+    # markers 수는 첫 프레임 또는 설정에서 파생될 수 있다고 가정합니다.
+    # 현재는 markers 수를 얻기 위해 첫 프레임을 로드합니다.
+    first_frame_path = os.path.join(landmarks_data_dir, "frame_00000.npy")
+    if not os.path.exists(first_frame_path):
+        print(f"오류: 첫 랜드마크 파일 {first_frame_path}을(를) 찾을 수 없습니다.")
+        return
+    num_markers = np.load(first_frame_path).shape[0]
 
     writer = c3d.Writer()
 
-    for frame_idx in range(num_frames):
-        current_frame_points_3d = points_data_all_frames[frame_idx]
+    # 제너레이터를 사용하여 반복
+    for frame_idx, current_frame_points_3d in enumerate(_landmark_generator(landmarks_data_dir, total_frames)):
+        if current_frame_points_3d is None:
+            # 필요한 경우 C3D 내보내기에서 누락된 프레임 처리 (예: 0을 쓰거나 건너뛰기)
+            # 단순화를 위해 일관된 수의 마커를 가정하고 누락된 경우 NaN으로 채웁니다.
+            # 또는 제너레이터가 유효한 데이터를 반환하거나 오류를 발생시키도록 처리해야 합니다.
+            # 프레임이 실제로 누락된 경우 0 또는 특수 값을 쓰고 싶을 수 있습니다.
+            # 현재는 None인 경우 건너뛰거나 NaN으로 채워 프레임 수를 유지합니다.
+            print(f"경고: C3D 내보내기 중 프레임 {frame_idx} 데이터가 누락되었습니다. NaN으로 채웁니다.")
+            current_frame_points_3d = np.full((num_markers, 3), np.nan) # 누락된 데이터에 대해 NaN으로 채우기
+
+        points_data_mm = current_frame_points_3d * 1000.0 # 미터에서 밀리미터로
 
         residuals_column = np.zeros((num_markers, 1), dtype=np.float32)
 
-        points_with_residuals = np.hstack((current_frame_points_3d, residuals_column))
+        points_with_residuals = np.hstack((points_data_mm, residuals_column))
         points_with_residuals = np.hstack((points_with_residuals, residuals_column))
 
         writer.add_frames([(points_with_residuals, np.array([]))])

@@ -4,6 +4,11 @@
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 */__pycache__/*
+/__pycache__/*
+*/ignore/*
+*/.temp_landmarks/*
+/build/
+/dist/
 
 # IPython
 profile_default/

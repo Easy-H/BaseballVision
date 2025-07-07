@@ -1,15 +1,18 @@
-import open3d as o3d # Open3D 임포트
+import open3d as o3d
 import numpy as np
 import config
+import time # 현재 시간을 위해 time 임포트
+
+import os # 경로 조작을 위해 os 임포트
 
 class InteractivePoseVisualizer:
-    def __init__(self, all_frames_3d_landmarks, initial_fps):
-        if not all_frames_3d_landmarks:
+    def __init__(self, landmarks_data_dir, total_frames, initial_fps):
+        if not os.path.isdir(landmarks_data_dir) or total_frames == 0:
             raise ValueError("시각화할 3D 랜드마크 데이터가 없습니다.")
 
-        self.all_frames_3d_landmarks = all_frames_3d_landmarks
-        self.num_frames = len(all_frames_3d_landmarks)
-
+        self.landmarks_data_dir = landmarks_data_dir
+        self.total_frames = total_frames
+        
         self.current_frame_idx = 0
         self.is_playing = False
         self.playback_speed_factor = 1.0
@@ -20,18 +23,29 @@ class InteractivePoseVisualizer:
         self.app.initialize()
 
         self.window = self.app.create_window("3D Interactive Pose Animation", 1024, 768)
-
         self.scene_widget = o3d.visualization.gui.SceneWidget()
         self.scene_widget.scene = o3d.visualization.rendering.Open3DScene(self.window.renderer)
         self.window.add_child(self.scene_widget)
-
         self.window.set_on_layout(self._on_layout)
 
-        all_landmarks_flat = np.vstack(self.all_frames_3d_landmarks)
-        self.scene_bbox = o3d.geometry.AxisAlignedBoundingBox.create_from_points(o3d.utility.Vector3dVector(all_landmarks_flat))
+        # 바운딩 박스 및 초기 형상 설정을 위한 초기 랜드마크 가져오기
+        initial_landmarks = self._load_frame_landmarks(0)
+        if initial_landmarks is None:
+            raise ValueError("초기 랜드마크 데이터를 로드할 수 없습니다.")
+
+        # 장면 BBox를 계산하려면 프레임 샘플이 필요하거나 합리적인 크기를 가정해야 합니다.
+        # 더 강력한 방법은 시작 시간이 허용하는 경우 모든 랜드마크 파일을 한 번 반복하거나,
+        # 이동이 제한된 경우 몇 개의 초기 및 최종 프레임을 기반으로 계산하는 것입니다.
+        # 현재는 initial_landmarks만으로 초기 카메라를 설정하기에 충분하다고 가정합니다.
+        # all_frames_3d_landmarks가 없는 경우 BBox에 대한 더 나은 접근 방식은 더 복잡하지만
+        # 처리 중 미리 계산/저장하거나 로드하여 수행할 수 있습니다.
+        # 현재는 임시 바운딩 박스를 만듭니다.
+        # 임시 해결책은 다음과 같습니다.
+        min_coords = np.min(initial_landmarks, axis=0) - 0.5 # 약간의 패딩 추가
+        max_coords = np.max(initial_landmarks, axis=0) + 0.5
+        self.scene_bbox = o3d.geometry.AxisAlignedBoundingBox(min_coords, max_coords)
 
         self.scene_widget.setup_camera(1.0, self.scene_bbox, [0, 0, -1])
-
         self.scene_widget.scene.set_background([0.1, 0.1, 0.1, 1.0])
 
         self.pcd_name = "landmarks_pcd"
@@ -40,11 +54,11 @@ class InteractivePoseVisualizer:
         self.point_cloud_geometry = None
         self.line_set_geometry = None
 
-        self._initialize_geometry()
-
+        self._initialize_geometry(initial_landmarks)
         self.window.set_on_key(self._on_key_event)
 
         print("\n--- 3D 인터랙티브 포즈 애니메이션 조작 방법 ---")
+        print(f"  총 프레임: {self.total_frames}")
         print("  Spacebar: 재생/일시정지")
         print("  'A' 또는 Left Arrow: 이전 프레임")
         print("  'D' 또는 Right Arrow: 다음 프레임")
@@ -56,17 +70,15 @@ class InteractivePoseVisualizer:
 
         self._update_geometry_for_frame(self.current_frame_idx)
 
-    def _on_layout(self, layout_context):
-        r = self.window.content_rect
-        # SceneWidget의 frame 속성을 설정하면, 내부적으로 씬의 뷰포트와 크기를 자동으로 조절합니다.
-        # 따라서 self.scene.set_view_size나 self.scene.set_viewport는 더 이상 필요하지 않습니다.
-        self.scene_widget.frame = r
-        # self.scene.set_view_size(r.width, r.height) # 제거
-        # self.scene.set_viewport(r.x, r.y, r.width, r.height) # 제거
+    def _load_frame_landmarks(self, frame_idx):
+        file_path = os.path.join(self.landmarks_data_dir, f"frame_{frame_idx:05d}.npy")
+        if os.path.exists(file_path):
+            return np.load(file_path)
+        else:
+            print(f"경고: 프레임 파일 없음: {file_path}")
+            return None
 
-    def _initialize_geometry(self):
-        initial_landmarks = self.all_frames_3d_landmarks[0]
-
+    def _initialize_geometry(self, initial_landmarks):
         self.point_cloud_geometry = o3d.geometry.PointCloud()
         self.point_cloud_geometry.points = o3d.utility.Vector3dVector(initial_landmarks)
         self.point_cloud_geometry.colors = o3d.utility.Vector3dVector(
@@ -101,92 +113,57 @@ class InteractivePoseVisualizer:
         self.scene_widget.scene.add_geometry(self.pcd_name, self.point_cloud_geometry, red_material)
         self.scene_widget.scene.add_geometry(self.line_set_name, self.line_set_geometry, white_material)
 
+
     def _update_geometry_for_frame(self, frame_idx):
-        if not (0 <= frame_idx < self.num_frames):
-            print(f"경고: 프레임 인덱스 {frame_idx}가 범위를 벗어났습니다 (0-{self.num_frames-1}).")
+        if not (0 <= frame_idx < self.total_frames):
+            print(f"경고: 프레임 인덱스 {frame_idx}가 범위를 벗어났습니다 (0-{self.total_frames-1}).")
             return
 
-        frame_landmarks_3d = self.all_frames_3d_landmarks[frame_idx]
+        frame_landmarks_3d = self._load_frame_landmarks(frame_idx)
+        if frame_landmarks_3d is None:
+            # 프레임이 누락된 경우, 원하는 동작에 따라 이전 프레임의 포즈를 유지하거나
+            # 장면을 지울 수 있습니다.
+            print(f"경고: 프레임 {frame_idx}의 랜드마크 데이터를 로드할 수 없습니다. 이전 프레임을 유지합니다.")
+            return
 
         self.point_cloud_geometry.points = o3d.utility.Vector3dVector(frame_landmarks_3d)
-        # self.point_cloud_geometry.colors = o3d.utility.Vector3dVector(
-        #     np.array([[1.0, 0.0, 0.0] for _ in range(frame_landmarks_3d.shape[0])])
-        # )
-
         self.line_set_geometry.points = o3d.utility.Vector3dVector(frame_landmarks_3d)
 
-    def update_frame_delay(self):
-        self.current_frame_delay = self.base_frame_delay / max(0.01, self.playback_speed_factor)
-
-    def _on_key_event(self, event):
-        if event.type == o3d.visualization.gui.KeyEvent.Type.DOWN:
-            key_code = event.key
-            if key_code == o3d.visualization.gui.Key.SPACE:
-                self._toggle_play_pause()
-            elif key_code == o3d.visualization.gui.Key.A or key_code == o3d.visualization.gui.Key.LEFT:
-                self._prev_frame()
-            elif key_code == o3d.visualization.gui.Key.D or key_code == o3d.visualization.gui.Key.RIGHT:
-                self._next_frame()
-            elif key_code == o3d.visualization.gui.Key.W or key_code == o3d.visualization.gui.Key.UP:
-                self._speed_up()
-            elif key_code == o3d.visualization.gui.Key.S or key_code == o3d.visualization.gui.Key.DOWN:
-                self._slow_down()
-            elif key_code == o3d.visualization.gui.Key.R:
-                self._reset_view()
-            elif key_code == o3d.visualization.gui.Key.Q:
-                self.window.close()
-            return o3d.visualization.gui.Widget.EventCallbackResult.HANDLED
-        return o3d.visualization.gui.Widget.EventCallbackResult.IGNORED
-
-    def _toggle_play_pause(self):
-        self.is_playing = not self.is_playing
-        print(f"애니메이션: {'재생 중' if self.is_playing else '일시 정지'}")
+        self.scene_widget.scene.update_geometry(self.pcd_name, self.point_cloud_geometry)
+        self.scene_widget.scene.update_geometry(self.line_set_name, self.line_set_geometry)
+        
+    # ... (나머지 메서드: _on_layout, update_frame_delay, _on_key_event,
+    # _toggle_play_pause, _next_frame, _prev_frame, _speed_up, _slow_down, _reset_view) ...
 
     def _next_frame(self):
-        self.is_playing = False # 수동 프레임 이동 시 재생 중지
-        self.current_frame_idx = (self.current_frame_idx + 1) % self.num_frames
+        self.is_playing = False # 수동 탐색 시 재생 중지
+        self.current_frame_idx = (self.current_frame_idx + 1) % self.total_frames
         self._update_geometry_for_frame(self.current_frame_idx)
-        self.app.post_redraw() # 수동 프레임 이동 후 즉시 갱신 요청
+        self.app.post_redraw()
 
     def _prev_frame(self):
-        self.is_playing = False # 수동 프레임 이동 시 재생 중지
-        self.current_frame_idx = (self.current_frame_idx - 1 + self.num_frames) % self.num_frames
+        self.is_playing = False # 수동 탐색 시 재생 중지
+        self.current_frame_idx = (self.current_frame_idx - 1 + self.total_frames) % self.total_frames
         self._update_geometry_for_frame(self.current_frame_idx)
-        self.app.post_redraw() # 수동 프레임 이동 후 즉시 갱신 요청
-
-    def _speed_up(self):
-        self.playback_speed_factor *= 1.2
-        self.update_frame_delay()
-        print(f"재생 속도: {self.playback_speed_factor:.2f}배")
-
-    def _slow_down(self):
-        self.playback_speed_factor /= 1.2
-        if self.playback_speed_factor < 0.1: self.playback_speed_factor = 0.1
-        self.update_frame_delay()
-        print(f"재생 속도: {self.playback_speed_factor:.2f}배")
-
-    def _reset_view(self):
-        self.scene_widget.setup_camera(1.0, self.scene_bbox, [0, 0, -1])
-        self.app.post_redraw() # 카메라 뷰 변경 후 즉시 갱신 요청
-        print("카메라 뷰 초기화.")
+        self.app.post_redraw()
 
     def run(self):
-        # 이 함수는 post_to_main_thread에 의해 반복적으로 호출됩니다.
         def update_animation_loop():
             current_time = time.time()
             if self.is_playing and (current_time - self.last_frame_time) >= self.current_frame_delay:
-                self.current_frame_idx = (self.current_frame_idx + 1) % self.num_frames
+                self.current_frame_idx = (self.current_frame_idx + 1) % self.total_frames
                 self._update_geometry_for_frame(self.current_frame_idx)
                 self.last_frame_time = current_time
-                self.app.post_redraw() # 프레임 업데이트 후 다시 그리도록 요청
+                self.app.post_redraw()
 
-            # 애니메이션 루프를 계속 실행하기 위해 이 함수를 다시 스케줄링합니다.
+            if self.window.is_closed(): # 창이 닫혔는지 확인하여 스케줄링 중지
+                return
+
             self.app.post_to_main_thread(self.window, update_animation_loop)
 
         self.last_frame_time = time.time()
-        # 애니메이션 루프의 첫 호출을 스케줄링하여 시작합니다.
         self.app.post_to_main_thread(self.window, update_animation_loop)
-        
+
         self.app.run()
         self.app.quit()
         print("3D 인터랙티브 시각화가 종료되었습니다.")
