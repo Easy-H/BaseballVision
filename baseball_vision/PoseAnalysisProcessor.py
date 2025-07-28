@@ -56,7 +56,7 @@ class PoseAnalysisProcessor:
 
         self.frame_width = int(caps[0].get(cv2.CAP_PROP_FRAME_WIDTH))
         self.frame_height = int(caps[0].get(cv2.CAP_PROP_FRAME_HEIGHT))
-        fps = caps[0].get(cv2.CAP_PROP_FPS)
+        self.fps = caps[0].get(cv2.CAP_PROP_FPS)
         self.total_frames = int(caps[0].get(cv2.CAP_PROP_FRAME_COUNT))
         
         fourcc = cv2.VideoWriter_fourcc(*'mp4v') # Codec for .mp4
@@ -67,8 +67,8 @@ class PoseAnalysisProcessor:
         # 출력 비디오의 높이는 원본 프레임 높이 + 그래프 높이
         output_frame_size = (self.frame_width, self.frame_height + graph_height)
 
-        combined_out = cv2.VideoWriter(self.combined_output_path, fourcc, fps, output_frame_size)
-        bone_out = cv2.VideoWriter(bone_output_path, fourcc, fps, output_frame_size)
+        combined_out = cv2.VideoWriter(self.combined_output_path, fourcc, self.fps, output_frame_size)
+        bone_out = cv2.VideoWriter(bone_output_path, fourcc, self.fps, output_frame_size)
 
         if not combined_out.isOpened():
             print(f"오류: 출력 비디오 파일 '{self.combined_output_path}'를 생성할 수 없습니다. 코덱 또는 권한을 확인하세요.")
@@ -190,7 +190,7 @@ class PoseAnalysisProcessor:
             self._initialize_video_capture_and_writers(video_path, video_prename, graph_height)
 
         if caps is None: # Check if initialization failed
-            return [], 0.0
+            return None, None, None, None
 
         self.frame_count = 0
         progress_interval = max(1, self.frame_count // 100) # Interval for progress display
@@ -234,4 +234,4 @@ class PoseAnalysisProcessor:
         analysis_tool.run() # Finalization step for the analysis_tool, e.g., saving data
         self.pose_detector.close() # Close MediaPipe pose detector
 
-        return self.combined_output_path, self.pose_detector.get_all_frames_landmarks_3d(), self.total_frames
+        return self.combined_output_path, self.pose_detector.get_all_frames_landmarks_3d(), self.total_frames, self.fps

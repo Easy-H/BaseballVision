@@ -153,7 +153,6 @@ class AnalysisTool:
     def create_graph_image(self, current_frame_idx: int, 
                            total_frames: int, width: int, height: int, labels: list = None,
                            graph_title="Joint Angles Over Time", y_label="Degree"):
-        
         # [수정 사항 8] 그래프 요소들이 초기화되었는지 확인하고 필요하면 초기화합니다.
         self._ensure_graph_initialized(total_frames, width, height, graph_title, y_label)
 
@@ -266,6 +265,8 @@ class AnalysisTool:
         if self.fig is not None:
             plt.close(self.fig)
             self.fig = None # Figure를 닫은 후 다시 초기화될 수 있도록 설정
+    def items(self):
+        pass
 
 class PitcherAnalysisTool(AnalysisTool):
     # [수정 사항 16] __init__ 메서드: 상위 클래스의 초기화를 호출하고, focus_label 기본값 설정
@@ -313,6 +314,10 @@ class PitcherAnalysisTool(AnalysisTool):
                 "Body Twist": round(angle_body_twist, 2),
                 "R Knee": round(angle_R_knee, 2),
                 "L Knee": round(angle_L_knee, 2)}
+    def items(self):
+        return ["R Elbow", "L Elbow", "R Shoulder",
+                "L Shoulder", "Shoulder", "Pelvis",
+                "Body Twist", "R Knee", "L Knee"]
 
 class BatterAnalysisTool(PitcherAnalysisTool):
     # [수정 사항 17] __init__ 메서드: 상위 클래스의 초기화를 호출하고, focus_label 기본값 설정
@@ -331,3 +336,8 @@ class BatterAnalysisTool(PitcherAnalysisTool):
         result["R wrist"] = angle_R_wrist
         result["L wrist"] = angle_L_wrist
         return result
+    def items(self):
+        ret = super.items()
+        ret.append("R wrist")
+        ret.append("L wrist")
+        return ret

@@ -1,0 +1,269 @@
+title: ModelSetting
+geometry: "450x500"
+resizable: false
+objs:
+  - type: LabelFrame
+    module: tkinter.ttk
+    name: frame_setting
+    attr:
+      text: "모델 및 처리 설정"
+    method: 
+      - name: pack
+        attr:
+          expand: true
+          fill: both
+          padx: 15
+          pady: 15
+    objs: 
+      # 모델 복잡도(row: 0)
+      - type: Label
+        module: tkinter.ttk
+        attr:
+          text: "모델 복잡도: "
+        method: 
+          - name: grid
+            attr:
+              row: 0
+              column: 0
+              sticky: w
+              pady: 5
+              padx: 5
+      - type: Spinbox
+        module: tkinter.ttk
+        name: MODEL_COMPLEXITY
+        attr:
+          from_: 0
+          to: 2
+          width: 5
+        method: 
+          - name: grid
+            attr:
+              row: 0
+              column: 1
+              sticky: ew
+              pady: 5
+              padx: 5
+      # 최소 감지 신뢰도(row: 1)
+      - type: Label
+        module: tkinter.ttk
+        attr:
+          text: "최소 감지 신뢰도: "
+        method: 
+          - name: grid
+            attr:
+              row: 1
+              column: 0
+              sticky: w
+              pady: 5
+              padx: 5
+      - type: Entry
+        module: tkinter.ttk
+        name: MIN_DETECTION_CONFIDENCE
+        attr:
+          width: 10
+        method: 
+          - name: grid
+            attr:
+              row: 1
+              column: 1
+              sticky: ew
+              pady: 5
+              padx: 5
+      # 최소 추적 신뢰도(row: 2)
+      - type: Label
+        module: tkinter.ttk
+        attr:
+          text: "최소 추적 신뢰도: "
+        method: 
+          - name: grid
+            attr:
+              row: 2
+              column: 0
+              sticky: w
+              pady: 5
+              padx: 5
+      - type: Entry
+        module: tkinter.ttk
+        name: MIN_TRACKING_CONFIDENCE
+        attr:
+          width: 10
+        method: 
+          - name: grid
+            attr:
+              row: 2
+              column: 1
+              sticky: ew
+              pady: 5
+              padx: 5
+      # 최소 가시성(row: 3)
+      - type: Label
+        module: tkinter.ttk
+        attr:
+          text: "최소 가시성:"
+        method: 
+          - name: grid
+            attr: 
+              row: 3
+              column: 0
+              sticky: w
+              pady: 5
+              padx: 5
+      - type: Entry
+        module: tkinter.ttk
+        name: MIN_DRAW_VISIBILITY
+        attr:
+          width: 10
+        method: 
+          - name: grid
+            attr:
+              row: 3
+              column: 1
+              sticky: ew
+              pady: 5
+              padx: 5
+      # 칼만 필터 적용(row: 4)
+      - type: Label
+        module: tkinter.ttk
+        attr:
+          text: "칼만 필터 적용:"
+        method: 
+          - name: grid
+            attr:
+              row: 4
+              column: 0
+              sticky: w
+              pady: 5
+              padx: 5
+      - type: Checkbutton
+        module: tkinter.ttk
+        name: APPLY_KALMAN_FILTER
+        attr:
+          width: 10
+        method: 
+          - name: grid
+            attr:
+              row: 4
+              column: 1
+              sticky: ew
+              pady: 5
+              padx: 5
+      # 프로세스 노이즈 표준편차(row: 5)
+      - type: Label
+        module: tkinter.ttk
+        attr:
+          text: "프로세스 노이즈 표준편차:"
+        method: 
+          - name: grid
+            attr:
+              row: 5
+              column: 0
+              sticky: w
+              pady: 5
+              padx: 5
+      - type: Entry
+        module: tkinter.ttk
+        name: PROCESS_NOISE_STD
+        attr:
+          width: 10
+        method: 
+          - name: grid
+            attr:
+              row: 5
+              column: 1
+              sticky: ew
+              pady: 5
+              padx: 5
+      # 측정 노이즈 표준편차(row: 6)
+      - type: Label
+        module: tkinter.ttk
+        attr:
+          text: "측정 노이즈 표준편차:"
+        method: 
+          - name: grid
+            attr:
+              row: 6
+              column: 0
+              sticky: w
+              pady: 5
+              padx: 5
+      - type: Entry
+        module: tkinter.ttk
+        name: MEASUREMENT_NOISE_STD
+        attr:
+          width: 10
+        method: 
+          - name: grid
+            attr:
+              row: 6
+              column: 1
+              sticky: ew
+              pady: 5
+              padx: 5
+      # 출력 디렉토리(row: 7)
+      - type: Label
+        module: tkinter.ttk
+        attr:
+          text: "출력 디렉토리:"
+        method: 
+          - name: grid
+            attr:
+              row: 7
+              column: 0
+              sticky: w
+              pady: 5
+              padx: 5
+      - type: Entry
+        module: tkinter.ttk
+        name: OUTPUT_DIR
+        attr:
+          width: 30
+        method: 
+          - name: grid
+            attr:
+              row: 7
+              column: 1
+              sticky: ew
+              pady: 5
+      - type: Button
+        module: tkinter.ttk
+        name: btn_output_dir_setting
+        attr:
+          text: "선택"
+        method: 
+          - name: grid
+            attr:
+              row: 7
+              column: 2
+              sticky: w
+              pady: 5
+              padx: 5
+              padx: 5
+  - type: Frame
+    module: tkinter.ttk
+    method:
+      - name: pack
+        attr:
+          pady: 10
+    objs:
+      - type: Button
+        module: tkinter.ttk
+        name: btn_save
+        attr:
+          text: "저장"
+          width: 30
+        method: 
+          - name: pack
+            attr:
+              side: left
+              padx: 10
+      - type: Button
+        module: tkinter.ttk
+        name: btn_cancel
+        attr:
+          text: "취소"
+          width: 30
+        method: 
+          - name: pack
+            attr:
+              side: left
+              padx: 10
