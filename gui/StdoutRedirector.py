@@ -1,8 +1,5 @@
 import tkinter as tk
-from tkinter import scrolledtext
-import sys
 import threading
-import time
 
 class StdoutRedirector(object):
     def __init__(self, text_widget, update_interval_ms=1000, max_lines=50):

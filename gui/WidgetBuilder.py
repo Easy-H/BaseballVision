@@ -1,19 +1,21 @@
-import tkinter
 import sys
+import tkinter.scrolledtext
 
-class AppTopLevel(tkinter.Toplevel):
-    def __init__(self, master):
-        super().__init__(master)
+class WidgetBuilder:
+    def set_window(self, target, data):
+        if "title" in data:
+            target.title(data["title"])
+        if "geometry" in data:
+            target.geometry(data["geometry"])
+        if "resizable" in data:
+            target.resizable(data["resizable"], data["resizable"])
+        if "background" in data:
+            target.configure(background=data["background"])
+
     def create_widget(self, master, data):
-        if data is None:
-            return
-        self.title(data["title"])
-        self.geometry(data["geometry"])
-        self.resizable(data["resizable"], data["resizable"])
-        
         self.objs = {}
         self._create_widget(master, data)
-
+        
     def _create_widget(self, parent, data):
         if "objs" not in data:
             return
@@ -22,11 +24,6 @@ class AppTopLevel(tkinter.Toplevel):
             self._widget(parent, j)
     
     def _widget(self, parent, data):
-        if "module" not in data:
-            return
-        if "type" not in data:
-            return
-        
         class_ = getattr(sys.modules[data["module"]], data["type"])
         obj = class_(parent)
 
@@ -53,6 +50,11 @@ class AppTopLevel(tkinter.Toplevel):
             return
         self.objs[data["name"]] = obj
 
-    def set_widget_state(self, obj_list, state):
-        for obj in obj_list:
-            obj.config(state=state)
+    def widget_config(self, obj_name, key, value):
+        if obj_name not in self.objs:
+            return
+        self.objs[obj_name][key] = value
+
+    def widgets_config(self, obj_name_list, key, value):
+        for obj_name in obj_name_list:
+            self.widget_config(obj_name, key, value)

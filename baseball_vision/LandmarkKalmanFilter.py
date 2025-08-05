@@ -56,7 +56,10 @@ class LandmarkKalmanFilter:
     def filter(self, current_landmarks_coords, visibility_scores=None, min_visibility_threshold=0.5):
         # current_landmarks_coords: 현재 프레임의 (num_landmarks, 3) numpy 배열
         # visibility_scores: 현재 프레임의 (num_landmarks,) numpy 배열 (0~1)
-        
+        if not self.initialized:
+            self.initialize_state(current_landmarks_coords)
+            return current_landmarks_coords
+
         filtered_coords = np.zeros_like(current_landmarks_coords)
         for i, kf in enumerate(self.filters):
             # predict 단계

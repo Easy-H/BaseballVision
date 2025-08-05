@@ -1,0 +1,254 @@
+title: BaseballVision
+geometry: "800x700"
+resizable: true
+background: gray14
+objs:
+  - name: frame_control
+    type: Frame
+    module: tkinter
+    attr:
+      bg: white
+    method: 
+      - name: pack
+        attr:
+          side: top
+          fill: x
+    objs: 
+      - type: Button
+        module: tkinter
+        name: btn_load_data
+        attr:
+          text: "Load Data"
+          bg: gray32
+          fg: white
+          relief: flat
+          bd: 1
+        method: 
+          - name: "pack"
+            attr:
+              side: "left"
+              ipadx: 10
+              ipady: 5
+              padx: 10
+              pady: 10
+      - type: Button
+        module: tkinter
+        name: btn_process_video
+        attr:
+          text: "Process"
+          bg: "#6799fa"
+          fg: white
+          relief: flat
+          bd: 1
+        method:
+          - name: pack
+            attr:
+              side: left
+              ipadx: 10
+              ipady: 5
+              padx: 10
+              pady: 10
+      - type: Label
+        module: tkinter
+        name: label_video_path_list
+        attr:
+          text: "Selected Video: None"
+          bg: white
+        method: 
+          - name: "pack"
+            attr:
+              side: "left"
+              padx: 10
+  - name: frame_graph_setting
+    type: Frame
+    module: tkinter
+    attr:
+      bg: gray84
+    method:
+      - name: pack
+        attr:
+          side: top
+          fill: x
+    objs: 
+      - name: btn_graph_setting
+        type: Button
+        module: tkinter
+        attr:
+          text: "Graph Setting"
+          bg: gray32
+          fg: white
+          relief: flat
+          bd: 1
+          highlightcolor: white
+        method:
+          - name: pack
+            attr:
+              side: right
+              ipadx: 10
+              ipady: 5
+              padx: 10
+              pady: 10
+      - name: combobox_pose_frame_maker
+        type: Combobox
+        module: tkinter.ttk
+        attr:
+          state: readonly
+        method:
+          - name: pack
+            attr:
+              side: left
+              padx: 10
+              pady: 10
+              ipadx: 10
+      - name: combobox_data_frame_maker
+        type: Combobox
+        module: tkinter.ttk
+        attr:
+          state: readonly
+        method:
+          - name: pack
+            attr:
+              side: left
+              padx: 10
+              pady: 10
+  - name: frame_save
+    type: Frame
+    module: tkinter
+    attr:
+      bg: gray84
+    method:
+      - name: pack
+        attr:
+          side: bottom
+          fill: x
+    objs:
+      - name: btn_save_data
+        type: Button
+        module: tkinter
+        attr:
+          text: "Save Data"
+          bg: "#6799fa"
+          fg: white
+          relief: flat
+          bd: 1
+        method: 
+          - name: pack
+            attr:
+              side: left
+              ipadx: 10
+              ipady: 5
+              padx: 10
+              pady: 10
+      - name: btn_save_video
+        type: Button
+        module: tkinter
+        attr:
+          text: "Save Video"
+          bg: gray32
+          fg: white
+          relief: flat
+          bd: 1
+        method: 
+          - name: pack
+            attr:
+              side: left
+              ipadx: 10
+              ipady: 5
+              padx: 10
+              pady: 10
+      - name: btn_save_csv
+        type: Button
+        module: tkinter
+        attr:
+          text: "Save CSV"
+          bg: "#6799fa"
+          fg: white
+          relief: flat
+          bd: 1
+        method: 
+          - name: pack
+            attr:
+              side: left
+              ipadx: 10
+              ipady: 5
+              padx: 10
+              pady: 10
+        #- type: Button
+          #module: tkinter.ttk
+          #name: btn_play_3d_video
+          #attr:
+            #text: "Play 3d Video"
+          #method: 
+            #- name: pack
+              #attr:
+                #side: left
+                #padx: 10
+                #pady: 10
+  - name: frame_analysis
+    type: Frame
+    module: tkinter
+    method:
+      - name: pack
+        attr:
+          fill: both
+          expand: true
+          side: bottom
+    objs:
+      - type: Frame
+        module: tkinter
+        method:
+          - name: pack
+            attr:
+              fill: x
+              side: bottom
+              padx: 10
+              pady: 10
+        objs:
+          - name: btn_play_video
+            type: Button
+            module: tkinter
+            attr:
+              text: "▶"
+              bg: "#6799fa"
+              fg: white
+              relief: flat
+              bd: 1
+            method: 
+              - name: pack
+                attr:
+                  side: left
+                  ipadx: 5
+                  ipady: 2
+          - name: scale_get_idx
+            type: Scale
+            module: tkinter
+            attr:
+              sliderrelief: flat
+              relief: flat
+              width: 10
+              sliderlength: 20
+              showvalue: 0
+              bg: "#6799fa"
+              troughcolor: "gray32"
+              bd: 0
+              orient: horizontal
+              to: 0
+            method:
+              - name: pack
+                attr:
+                  fill: x
+                  side: bottom
+                  padx: 10
+                  pady: 0
+      - name: label_pose_img
+        type: Label
+        module: tkinter
+        attr:
+          bg: black
+        method: 
+          - name: pack
+            attr: 
+              fill: both
+              expand: true
+              padx: 10
+              pady: 10

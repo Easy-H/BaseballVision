@@ -1,0 +1,107 @@
+title: Processor
+geometry: "300x300"
+resizable: true
+background: gray14
+objs:
+  - type: Frame
+    module: tkinter
+    name: frame_control
+    attr:
+      bg: white
+    method: 
+      - name: pack
+        attr:
+          side: top
+          fill: x
+    objs: 
+      - name: btn_select_video
+        type: Button
+        module: tkinter
+        attr:
+          text: "Select Video"
+          bg: "#6799fa"
+          fg: white
+          relief: flat
+          bd: 1
+        method: 
+          - name: "pack"
+            attr:
+              side: "left"
+              ipadx: 10
+              ipady: 5
+      - name: btn_process_video
+        type: Button
+        module: tkinter
+        attr:
+          text: "Process"
+          bg: "#6799fa"
+          fg: white
+          relief: flat
+          bd: 1
+        method:
+          - name: pack
+            attr:
+              side: right
+              ipadx: 10
+              ipady: 5
+      - name: btn_setting
+        type: Button
+        module: tkinter
+        attr:
+          text: "Model Setting"
+          bg: gray32
+          fg: white
+          relief: flat
+          bd: 1
+        method: 
+          - name: pack
+            attr:
+              side: right
+              ipadx: 10
+              ipady: 5
+  - type: Frame
+    module: tkinter
+    method: 
+      - name: pack
+        attr:
+          side: top
+          fill: x
+    objs:
+      - name: label_progress
+        type: Label
+        module: tkinter
+        method:
+          - name: pack
+            attr:
+              fill: x
+      - name: progress_progress
+        type: Progressbar
+        module: tkinter.ttk
+        attr:
+          maximum: 1
+        method:
+          - name: pack
+            attr:
+              fill: x
+              ipadx: 10
+              ipady: 10
+  - type: Frame
+    module: tkinter
+    attr:
+      bg: white
+    method:
+      - name: pack
+        attr:
+          fill: both
+          expand: true
+    objs:
+      - name: label_video_path_list
+        type: Label
+        module: tkinter
+        attr:
+          text: "Selected Video: None"
+          bg: white
+        method: 
+          - name: "pack"
+            attr:
+              fill: both

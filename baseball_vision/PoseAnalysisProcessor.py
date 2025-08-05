@@ -1,8 +1,7 @@
-import baseball_vision.draw_image as di
-import baseball_vision.PoseDetector as bvpd
+import baseball_vision.frame_maker as di
+import baseball_vision.pose_detector as bvpd
 import config
 import numpy as np
-import matplotlib.pyplot as plt
 import cv2
 import os
 import sys
@@ -161,7 +160,7 @@ class PoseAnalysisProcessor:
 
         frame_with_pose = frame[0].copy()
         frame_with_pose = di.draw_pose_on_frame(frame[0], landmarks[0],
-                                                pose_visibility_array=visibility_scores[0])
+                                                visibility_score=visibility_scores[0])
         final_pose_only_frame = di.draw_diff(frame[0], frame_with_pose)
         
         # Add text, frame count, and graph to both frames
