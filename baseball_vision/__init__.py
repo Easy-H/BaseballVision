@@ -1,2 +1,2 @@
-from .processed_data import ProcessedData
-from .processor import Processor
+from .pose.processed_data import ProcessedData
+from .pose.processor import Processor

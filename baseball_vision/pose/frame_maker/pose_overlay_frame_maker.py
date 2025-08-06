@@ -1,4 +1,4 @@
-from .pose_frame_maker import PoseFrameMaker
+from .pose_bone_frame_maker import IPoseFrameMaker
 from ..processed_data import ProcessedData
 
 import pandas as pd
@@ -7,16 +7,19 @@ from PIL import Image, ImageDraw, ImageFont
 
 font_path = ".\_internal\Font\KBO.ttf"
 
-class PoseOverlayFrameMaker(PoseFrameMaker):
-    def __init__(self, data:ProcessedData = None, df:pd.DataFrame = None):
-        super().__init__(data)
-        self.set_data(data, df)
-        self.target_idx = 0
+class PoseOverlayFrameMaker(IPoseFrameMaker):
+    def __init__(self, frame_maker:IPoseFrameMaker):
+        self.frame_maker = frame_maker
 
+    def set_data(self, data:ProcessedData, df:pd.DataFrame):
+        if data is None: return
+
+        self.frame_maker.set_data(data, df)
+        self.df = df
         
     def get_img_at(self, idx:int):
-
-        img = super().get_img_at(idx)
+        
+        img = self.frame_maker.get_img_at(idx)
 
         if img is None:
             return None
@@ -26,7 +29,8 @@ class PoseOverlayFrameMaker(PoseFrameMaker):
 
         return ret_img
 
-    def overlay_df_data(self, img, data, frame_cnt):
+    def overlay_df_data(self, img, data:dict, frame_cnt:int):
+
         ret_img = img.copy()
 
         ret_img, t = self.put_text(ret_img, str(frame_cnt),
@@ -35,9 +39,16 @@ class PoseOverlayFrameMaker(PoseFrameMaker):
                                 (32, 32, 32, 0),
                                 font_path)
 
-        y_offset = ret_img.shape[0] - (len(data) * 30) # Start from bottom, reserving space for all lines
+        print_data = {}
+
+        for name, value in data.items():
+            if name in self.labels:
+                print_data[name] = value
+
+        y_offset = ret_img.shape[0] - (len(print_data) * 30)
         
-        for i, (name, value) in enumerate(data.items()):
+        for i, (name, value) in enumerate(print_data.items()):
+
             pos = (10, y_offset + i * 30)
 
             ret_img, bg_box = self.put_text(ret_img, name,

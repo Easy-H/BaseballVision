@@ -1,5 +1,5 @@
 from .pose_detector import IPoseDetector, MediaPipePoseDetector
-from baseball_vision.processed_data import ProcessedData
+from .processed_data import ProcessedData
 from utils.progress_bar.progress_bar import IProgressBar
 import cv2
 

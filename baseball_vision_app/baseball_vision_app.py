@@ -2,12 +2,13 @@ from .process_setting_app import ProcessSetting
 from .graph_draw_setting_app import GraphSetting
 from .process_app import ProcessApp
 
-from baseball_vision.frame_maker \
+from baseball_vision.pose.frame_maker \
     import PoseFrameMaker, VConcatFrameMaker,\
-        GraphFrameMaker, PoseOverlayFrameMaker, PoseOnlyFrameMaker
+        GraphFrameMaker, PoseOverlayFrameMaker, PoseOnlyFrameMaker,\
+        TraceFrameMaker
 
-import baseball_vision.tool as bvtool
-import baseball_vision.draw_3d as d3d
+import baseball_vision.pose.analysis_tool as bvtool
+import baseball_vision.pose.visualizer.draw_3d as d3d
 from baseball_vision import ProcessedData
 
 from gui.WidgetBuilder import WidgetBuilder
@@ -43,11 +44,17 @@ class BaseballVisionApp(WidgetBuilder):
         self.pose_frame_maker_dict = {
             "Basic": PoseFrameMaker(),
             "PoseOnly": PoseOnlyFrameMaker(),
-            "OverlayData": PoseOverlayFrameMaker()
+            "BasicOverlayData": PoseOverlayFrameMaker(PoseFrameMaker()),
+            "PoseOnlyOverlayData": PoseOverlayFrameMaker(PoseOnlyFrameMaker())
         }
 
         self.data_frame_maker_dict = {
             "Graph": GraphFrameMaker()
+        }
+
+        self.analysis_tool_dict = {
+            "Joint Angle": bvtool.JointAnalysisTool(),
+            "Velocity": bvtool.VelocityAnalysisTool()
         }
 
         self._bind_method()
@@ -55,8 +62,10 @@ class BaseballVisionApp(WidgetBuilder):
         self.bv_data = None
         self.df = None
 
-        self.tool = bvtool.PitcherAnalysisTool(["Pelvis", "Body Twist"])
-        self.visualize_parameter = ["Pelvis", "Body Twist"]
+        self.tool = bvtool.JointAnalysisTool()
+        #self.tool = bvtool.VelocityAnalysisTool()
+
+        self.visualize_parameter = []
 
         self.video_frame_maker = self.set_video_frame_maker()
 
@@ -93,17 +102,29 @@ class BaseballVisionApp(WidgetBuilder):
                            "values", [*self.pose_frame_maker_dict.keys()])
         self.widget_config("combobox_data_frame_maker",
                            "values", [*self.data_frame_maker_dict.keys()])
+        self.widget_config("combobox_analysis_tool",
+                           "values", [*self.analysis_tool_dict.keys()])
         
-        self.objs["combobox_pose_frame_maker"].current(0) 
+        self.objs["combobox_pose_frame_maker"].current(2) 
         self.objs["combobox_data_frame_maker"].current(0) 
+        self.objs["combobox_analysis_tool"].current(0) 
 
         self.objs["combobox_pose_frame_maker"].bind(
             "<<ComboboxSelected>>", self.frame_maker_setting_changed)
         self.objs["combobox_data_frame_maker"].bind(
             "<<ComboboxSelected>>", self.frame_maker_setting_changed)
+        self.objs["combobox_analysis_tool"].bind(
+            "<<ComboboxSelected>>", self.analysis_tool_setting_changed)
+        
         self.objs["scale_get_idx"].bind("<Button-1>", self.pause_video)
     
     def frame_maker_setting_changed(self, event=None):
+        self.set_video_frame_maker()
+        self.show_img()
+    
+    def analysis_tool_setting_changed(self, event=None):
+
+        self.df = self.get_analysis_tool().calc(self.bv_data)
         self.set_video_frame_maker()
         self.show_img()
 
@@ -111,12 +132,19 @@ class BaseballVisionApp(WidgetBuilder):
         if self.bv_data is None:
             return
         
-        pose_frame_maker = self.pose_frame_maker_dict[
-            self.objs["combobox_pose_frame_maker"].get()]
-        data_frame_maker = self.data_frame_maker_dict[
-            self.objs["combobox_data_frame_maker"].get()]
+        pose_idx = "BasicOverlayData"
+        data_idx = "Graph"
+        
+        if "combobox_pose_frame_maker" in self.objs:
+            pose_idx = self.objs["combobox_pose_frame_maker"].get()
+        if "combobox_data_frame_maker" in self.objs:
+            data_idx = self.objs["combobox_data_frame_maker"].get()
+
+        pose_frame_maker = self.pose_frame_maker_dict[pose_idx]
+        data_frame_maker = self.data_frame_maker_dict[data_idx]
 
         pose_frame_maker.set_data(self.bv_data, self.df)
+        pose_frame_maker.set_focus_label(self.visualize_parameter)
         data_frame_maker.set_graph(self.df,
             (int(self.bv_data.raw_video_width_list[0]), 200))
         data_frame_maker.set_focus_label(self.visualize_parameter)
@@ -136,6 +164,15 @@ class BaseballVisionApp(WidgetBuilder):
         self.is_video_play = True
         self.widget_config("btn_play_video", "text", "■")
         self._play_video()
+
+    def get_analysis_tool(self):
+        
+        tool_idx = "Joint Angle"
+        
+        if "combobox_analysis_tool" in self.objs:
+            tool_idx = self.objs["combobox_analysis_tool"].get()
+
+        return self.analysis_tool_dict[tool_idx]
 
     def _play_video(self):
 
@@ -169,8 +206,8 @@ class BaseballVisionApp(WidgetBuilder):
             self.widget_config("btn_play_video", "text", "▶")
             return
 
-        img_width = img.shape[0]
-        img_height = img.shape[1]
+        img_width = img.shape[1]
+        img_height = img.shape[0]
         
         img = Image.fromarray(img)
         
@@ -179,6 +216,7 @@ class BaseballVisionApp(WidgetBuilder):
 
         width_ratio = label_width / img_width
         height_ratio = label_height / img_height
+
 
         if width_ratio < height_ratio:
             ratio = width_ratio
@@ -199,7 +237,7 @@ class BaseballVisionApp(WidgetBuilder):
     def set_bv_data(self, bv_data:ProcessedData):
 
         self.bv_data = bv_data
-        self.df = self.tool.calc(self.bv_data)
+        self.df = self.get_analysis_tool().calc(self.bv_data)
         self.set_video_frame_maker()
             
         self.widget_config("scale_get_idx", "to",
@@ -216,7 +254,7 @@ class BaseballVisionApp(WidgetBuilder):
 
     def open_graph_settings(self):
         GraphSetting(self.master, self.visualize_parameter, 
-                     self.tool, self._graph_settings_changed)
+                     self.get_analysis_tool(), self._graph_settings_changed)
     
     def _graph_settings_changed(self):
         self.set_video_frame_maker()

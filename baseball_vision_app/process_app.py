@@ -1,7 +1,7 @@
 from .process_setting_app import ProcessSetting
 
-from baseball_vision.processor import Processor
-from baseball_vision.pose_detector import MediaPipePoseDetector
+from baseball_vision.pose.processor import Processor
+from baseball_vision.pose.pose_detector import MediaPipePoseDetector
 from .progress_bar import ProgressBar
 
 from gui.WidgetBuilder import WidgetBuilder

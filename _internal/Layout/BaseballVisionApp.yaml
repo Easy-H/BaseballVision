@@ -111,6 +111,17 @@ objs:
               side: left
               padx: 10
               pady: 10
+      - name: combobox_analysis_tool
+        type: Combobox
+        module: tkinter.ttk
+        attr:
+          state: readonly
+        method:
+          - name: pack
+            attr:
+              side: right
+              padx: 10
+              pady: 10
   - name: frame_save
     type: Frame
     module: tkinter
