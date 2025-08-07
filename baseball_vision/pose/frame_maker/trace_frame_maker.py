@@ -40,17 +40,46 @@ class TraceFrameMaker(IPoseFrameMaker):
         
         
 def draw_landmark(img, idx, landmarks_list_list, img_size, visibility_list_list, labels):
+    
+    before_coordinate = {}
+
+    for key, coord in landmarks_list_list[0].items():
+        if key not in labels:
+            continue
+        if (visibility_list_list[0][key] < 
+            config.MODEL_CONFIG["MIN_DRAW_VISIBILITY"]):
+            continue
+        
+        coordinate = (int(coord[0] * img_size[0]), 
+                            int(coord[1] * img_size[1]))
+
+        cv2.circle(img, coordinate, 2, (255, 0, 0), -1)
+
+        before_coordinate[key] = coordinate
+
     for i in range(idx):
-        for key, coord in landmarks_list_list[i].items():
+        if landmarks_list_list[i + 1] is None:
+            continue
+        now_coordinate = {}
+        for key, coord in landmarks_list_list[i + 1].items():
             if key not in labels:
                 continue
-            if (visibility_list_list[i][key] < 
+            if (visibility_list_list[i + 1][key] < 
                 config.MODEL_CONFIG["MIN_DRAW_VISIBILITY"]):
                 continue
         
-            center_coordinate = (int(coord[0] * img_size[0]), 
-                                 int(coord[1] * img_size[1]))
+            coordinate = (int(coord[0] * img_size[0]), 
+                                int(coord[1] * img_size[1]))
+            
+            if key in before_coordinate:
+                cv2.line(img, before_coordinate[key],
+                        coordinate, (255, 0, 0), 2)
+            else:
+                cv2.circle(img, coordinate, 2, (255, 0, 0), -1)
 
-            cv2.circle(img, center_coordinate, 2, (255, 0, 0), -1)
-    
+
+            now_coordinate[key] = coordinate
+
+        before_coordinate = now_coordinate
+
     return img

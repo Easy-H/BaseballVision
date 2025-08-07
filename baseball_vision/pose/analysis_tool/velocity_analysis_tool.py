@@ -24,7 +24,14 @@ class VelocityAnalysisTool(AnalysisTool):
                     current_landmarks, next_landmarks)
                 results.append(distance_result)
                 
-        return pd.DataFrame(results)
+        df = pd.DataFrame(results)
+
+        df = df.infer_objects(copy=False)
+        df_interpolated = df.interpolate(method='linear', axis=0)
+
+        df_final = df_interpolated.ffill().bfill()
+
+        return df_final
 
     def calc_distance(self, pose_before, pose_next):
 

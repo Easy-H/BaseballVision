@@ -11,8 +11,8 @@ joint_calc_parameter = {
     "L_SHOULDER": ["R_SHOULDER", "L_SHOULDER", "L_ELBOW"],
     "R_KNEE": ["R_HIP", "R_KNEE", "R_ANKLE"],
     "L_KNEE": ["L_HIP", "L_KNEE", "L_ANKLE"],
-    "R_WRIST": ["R_ELBOW", "R_WRIST", "R_PINKY_TIP"],
-    "L_WRIST": ["L_ELBOW", "L_WRIST", "L_PINKY_TIP"]
+    "R_WRIST": ["R_ELBOW", "R_WRIST", "R_PINKY"],
+    "L_WRIST": ["L_ELBOW", "L_WRIST", "L_PINKY"]
         
 }
 
@@ -30,7 +30,14 @@ class JointAnalysisTool(AnalysisTool):
             for landmarks_3d in landmarks_3d_list
         ]
         
-        return pd.DataFrame(results)
+        df = pd.DataFrame(results)
+
+        df = df.infer_objects(copy=False)
+        df_interpolated = df.interpolate(method='linear', axis=0)
+
+        df_final = df_interpolated.ffill().bfill()
+
+        return df_final
     
     def calc_joints(self, joints):
         # --- 각도 계산 ---

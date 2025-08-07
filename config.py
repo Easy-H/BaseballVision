@@ -14,7 +14,7 @@ MODEL_CONFIG = {
     "MIN_DRAW_VISIBILITY" : 0.2,
     "PROCESS_NOISE_STD" : 0.001,
     "MEASUREMENT_NOISE_STD" : 0.05,
-    "APPLY_KALMAN_FILTER" : True,
+    "APPLY_KALMAN_FILTER" : False,
     "OUTPUT_DIR" : 'result_data'
 }
 

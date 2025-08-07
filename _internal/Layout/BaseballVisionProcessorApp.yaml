@@ -56,7 +56,7 @@ objs:
         method: 
           - name: pack
             attr:
-              side: right
+              fill: x
               ipadx: 10
               ipady: 5
   - type: Frame

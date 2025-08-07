@@ -45,7 +45,8 @@ class BaseballVisionApp(WidgetBuilder):
             "Basic": PoseFrameMaker(),
             "PoseOnly": PoseOnlyFrameMaker(),
             "BasicOverlayData": PoseOverlayFrameMaker(PoseFrameMaker()),
-            "PoseOnlyOverlayData": PoseOverlayFrameMaker(PoseOnlyFrameMaker())
+            "PoseOnlyOverlayData": PoseOverlayFrameMaker(PoseOnlyFrameMaker()),
+            "Trace": TraceFrameMaker()
         }
 
         self.data_frame_maker_dict = {
@@ -54,7 +55,8 @@ class BaseballVisionApp(WidgetBuilder):
 
         self.analysis_tool_dict = {
             "Joint Angle": bvtool.JointAnalysisTool(),
-            "Velocity": bvtool.VelocityAnalysisTool()
+            "Velocity": bvtool.VelocityAnalysisTool(),
+            "Height": bvtool.HeightAnalysisTool()
         }
 
         self._bind_method()
