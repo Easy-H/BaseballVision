@@ -69,7 +69,7 @@ class BaseballVisionApp(WidgetBuilder):
 
         self.visualize_parameter = []
 
-        self.video_frame_maker = self.set_video_frame_maker()
+        self.set_video_frame_maker()
 
         self.video_maker = VideoMaker()
 
@@ -151,7 +151,7 @@ class BaseballVisionApp(WidgetBuilder):
             (int(self.bv_data.raw_video_width_list[0]), 200))
         data_frame_maker.set_focus_label(self.visualize_parameter)
 
-        self.video_frame_maker= VConcatFrameMaker([pose_frame_maker,
+        self.video_frame_maker = VConcatFrameMaker([pose_frame_maker,
                                                    data_frame_maker])
     
     def play_video(self):

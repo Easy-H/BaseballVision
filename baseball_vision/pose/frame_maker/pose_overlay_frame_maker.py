@@ -16,6 +16,9 @@ class PoseOverlayFrameMaker(IPoseFrameMaker):
 
         self.frame_maker.set_data(data, df)
         self.df = df
+    
+    def get_size(self):
+        return self.frame_maker.get_size()
         
     def get_img_at(self, idx:int):
         
