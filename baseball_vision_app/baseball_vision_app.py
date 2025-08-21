@@ -3,9 +3,9 @@ from .graph_draw_setting_app import GraphSetting
 from .process_app import ProcessApp
 
 from baseball_vision.pose.frame_maker \
-    import PoseFrameMaker, VConcatFrameMaker,\
-        GraphFrameMaker, PoseOverlayFrameMaker, PoseOnlyFrameMaker,\
-        TraceFrameMaker
+    import VConcatFrameMaker, GraphFrameMaker,  PoseOverlayFrameMaker,\
+        PoseFrameMaker, PoseOnlyFrameMaker, \
+        TraceFrameMaker, TraceOnlyFrameMaker
 
 import baseball_vision.pose.analysis_tool as bvtool
 import baseball_vision.pose.visualizer.draw_3d as d3d
@@ -42,11 +42,14 @@ class BaseballVisionApp(WidgetBuilder):
         master.bind("<Configure>", self.on_window_resize)
 
         self.pose_frame_maker_dict = {
-            "Basic": PoseFrameMaker(),
+            "Pose": PoseFrameMaker(),
             "PoseOnly": PoseOnlyFrameMaker(),
-            "BasicOverlayData": PoseOverlayFrameMaker(PoseFrameMaker()),
+            "Trace": TraceFrameMaker(),
+            "TraceOnly": TraceOnlyFrameMaker(),
+            "PoseOverlayData": PoseOverlayFrameMaker(PoseFrameMaker()),
             "PoseOnlyOverlayData": PoseOverlayFrameMaker(PoseOnlyFrameMaker()),
-            "Trace": TraceFrameMaker()
+            "TraceOverlayData": PoseOverlayFrameMaker(TraceFrameMaker()),
+            "TraceOnlyOverlayData": PoseOverlayFrameMaker(TraceOnlyFrameMaker())
         }
 
         self.data_frame_maker_dict = {
@@ -107,7 +110,7 @@ class BaseballVisionApp(WidgetBuilder):
         self.widget_config("combobox_analysis_tool",
                            "values", [*self.analysis_tool_dict.keys()])
         
-        self.objs["combobox_pose_frame_maker"].current(2) 
+        self.objs["combobox_pose_frame_maker"].current(4) 
         self.objs["combobox_data_frame_maker"].current(0) 
         self.objs["combobox_analysis_tool"].current(0) 
 

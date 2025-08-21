@@ -1,5 +1,5 @@
 title: ModelSetting
-geometry: "450x500"
+geometry: "450x600"
 resizable: false
 objs:
   - type: LabelFrame

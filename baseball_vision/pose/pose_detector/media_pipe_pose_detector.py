@@ -121,7 +121,7 @@ class MediaPipePoseDetector(IPoseDetector):
                 continue
 
             raw_landmarks_3d_per_view.append(np.array([
-                [lmk.x, lmk.y, lmk.z]
+                [lmk.x, -lmk.y, lmk.z]
                 for lmk in results.pose_world_landmarks.landmark
             ]))
 

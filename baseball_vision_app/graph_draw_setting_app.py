@@ -8,7 +8,7 @@ class GraphSetting(tk.Toplevel):
         super().__init__(master)
         self.master = master
         self.title("그래프 설정")
-        self.geometry("350x400")
+        self.geometry("350x600")
         self.resizable(False, False)
 
         # 🌟🌟🌟 추가: MainApplication의 리스트를 직접 참조 🌟🌟🌟

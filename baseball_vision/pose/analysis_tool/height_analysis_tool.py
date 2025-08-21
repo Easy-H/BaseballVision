@@ -2,7 +2,7 @@ from .analysis_tool import AnalysisTool
 from ..processed_data import ProcessedData
 
 import numpy as np
-import pandas as pd
+from utils.data import PandasDataFrame
 
 class HeightAnalysisTool(AnalysisTool):
 
@@ -16,15 +16,8 @@ class HeightAnalysisTool(AnalysisTool):
             self.calc_height(landmarks_3d) if landmarks_3d is not None else {}
             for landmarks_3d in landmarks_3d_list
         ]
-                
-        df = pd.DataFrame(results)
-
-        df = df.infer_objects(copy=False)
-        df_interpolated = df.interpolate(method='linear', axis=0)
-
-        df_final = df_interpolated.ffill().bfill()
-
-        return df_final
+        
+        return PandasDataFrame(results)
 
     def calc_height(self, landmarks):
 
@@ -32,15 +25,14 @@ class HeightAnalysisTool(AnalysisTool):
 
         for name in self.items():
             if name in landmarks:
-                ret[name] = round(-landmarks[name][1] * 100, 2)
+                ret[name] = round(landmarks[name][1] * 100, 2)
 
         return ret
     
     def items(self):
-        return ["R_SHOULDER", "R_ELBOW", "R_WRIST",
-                "L_SHOULDER", "L_ELBOW", "L_WRIST",
-                "R_HIP", "R_KNEE", "R_ANKLE",
-                "L_HIP", "L_KNEE", "L_ANKLE"]
-
-def calc_distance(point1, point2):
-    return round(np.linalg.norm(point1 - point2) * 100, 4)
+        return ["R_SHOULDER", "L_SHOULDER", 
+                "R_ELBOW", "L_ELBOW", 
+                "R_WRIST", "L_WRIST",
+                "R_HIP", "L_HIP",
+                "R_KNEE", "L_KNEE", 
+                "R_ANKLE", "L_ANKLE"]

@@ -1,15 +1,15 @@
-from baseball_vision.graph_drawer import GraphDrawer
+from utils.data.graph_drawer import GraphDrawer
 from utils.frame_maker import IFrameMaker
+from utils.data import PandasDataFrame
 
 import numpy as np
-import pandas as pd
 
 class GraphFrameMaker(IFrameMaker):
-    def __init__(self, df:pd.DataFrame=None, graph_size:(int) = 0):
+    def __init__(self, df:PandasDataFrame=None, graph_size:(int) = 0):
         self.graph_drawer = GraphDrawer()
         self.set_graph(df, graph_size)
 
-    def set_graph(self, df:pd.DataFrame, graph_size):
+    def set_graph(self, df:PandasDataFrame, graph_size):
         if df is None:
             return
         self.df = df
@@ -20,11 +20,11 @@ class GraphFrameMaker(IFrameMaker):
         self.labels = []
         
         for label in labels:
-            if label in self.df.columns.to_list():
+            if label in self.df.get_column_list():
                 self.labels.append(label)
 
         if len(self.labels) == 0:
-            self.labels = self.df.columns.to_list()
+            self.labels = self.df.get_column_list()
 
     def get_size(self):
         return self.graph_size
@@ -38,7 +38,7 @@ class GraphFrameMaker(IFrameMaker):
         
     def get_img_at(self, idx:int):
 
-        if idx >= self.df.shape[0] - 1:
+        if idx >= self.df.get_row_count() - 1:
             return None
         
         return self.graph_drawer.create_graph_image(idx, self.labels)

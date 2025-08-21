@@ -1,10 +1,10 @@
-from baseball_vision.graph_drawer import GraphDrawer
+from utils.data.graph_drawer import GraphDrawer
 from ..processed_data import ProcessedData
-import pandas as pd
+from utils.data import PandasDataFrame
     
 class AnalysisTool:
     def __init__(self, label:list):
-        self.df_results = pd.DataFrame()
+        self.df_results = PandasDataFrame()
         self.focus_label = label
 
     def calc(self, data:ProcessedData):

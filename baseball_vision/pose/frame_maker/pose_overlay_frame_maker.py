@@ -1,7 +1,7 @@
 from .pose_bone_frame_maker import IPoseFrameMaker
 from ..processed_data import ProcessedData
+from utils.data import PandasDataFrame
 
-import pandas as pd
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
@@ -11,12 +11,16 @@ class PoseOverlayFrameMaker(IPoseFrameMaker):
     def __init__(self, frame_maker:IPoseFrameMaker):
         self.frame_maker = frame_maker
 
-    def set_data(self, data:ProcessedData, df:pd.DataFrame):
+    def set_data(self, data:ProcessedData, df:PandasDataFrame):
         if data is None: return
 
         self.frame_maker.set_data(data, df)
-        self.df = df
+        super().set_data(data, df)
     
+    def set_focus_label(self, labels):
+        self.frame_maker.set_focus_label(labels)
+        super().set_focus_label(labels)
+
     def get_size(self):
         return self.frame_maker.get_size()
         
@@ -28,7 +32,7 @@ class PoseOverlayFrameMaker(IPoseFrameMaker):
             return None
         
         ret_img = self.overlay_df_data(
-            img, self.df.iloc[idx].to_dict(), idx)
+            img, self.df.get_data_row(idx), idx)
 
         return ret_img
 

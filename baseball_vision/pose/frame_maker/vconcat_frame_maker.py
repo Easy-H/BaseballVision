@@ -1,10 +1,9 @@
 from ..processed_data import ProcessedData
 from utils.frame_maker import IFrameMaker
-import config
+from utils.data import PandasDataFrame
 
 import cv2
 import numpy as np
-import pandas as pd
 
 class VConcatFrameMaker(IFrameMaker):
     def __init__(self, frame_maker_list:IFrameMaker):

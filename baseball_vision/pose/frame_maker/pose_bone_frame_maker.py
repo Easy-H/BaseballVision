@@ -1,23 +1,23 @@
 from ..processed_data import ProcessedData
 from .pose_frame_maker import IPoseFrameMaker
+from utils.data import PandasDataFrame
 import config
 
 import cv2
 import numpy as np
-import pandas as pd
 
 class PoseFrameMaker(IPoseFrameMaker):
     def __init__(self):
         self.target_idx = 0
 
-    def set_data(self, data:ProcessedData, df:pd.DataFrame):
+    def set_data(self, data:ProcessedData, df:PandasDataFrame):
         if data is None: return
 
+        self.df = df
         self.bv_data = data
         self.raw_img_list = data.get_raw_img_list(self.target_idx)
         self.landmarks_2d_list = data.get_landmarks_2d_list(self.target_idx)
         self.visibility_list = data.get_visibility_score_list(self.target_idx)
-        self.df = df
         
     def get_size(self):
         width = self.bv_data.raw_video_width_list[self.target_idx]
@@ -35,17 +35,17 @@ class PoseFrameMaker(IPoseFrameMaker):
                 self.visibility_list[idx])
     
 class PoseOnlyFrameMaker(IPoseFrameMaker):
-    def __init__(self, data:ProcessedData = None, df:pd.DataFrame = None):
+    def __init__(self, data:ProcessedData = None, df:PandasDataFrame = None):
         self.set_data(data, df)
         self.target_idx = 0
 
-    def set_data(self, data:ProcessedData, df:pd.DataFrame):
+    def set_data(self, data:ProcessedData, df:PandasDataFrame):
         if data is None: return
 
+        self.df = df
         self.bv_data = data
         self.landmark_2d_list = data.get_landmarks_2d_list(self.target_idx)
         self.visibility_list = data.get_visibility_score_list(self.target_idx)
-        self.df = df
         
     def get_size(self):
         width = self.bv_data.raw_video_width_list[self.target_idx]
@@ -71,10 +71,10 @@ def draw_landmarks_custom(image, landmarks_array, image_width, image_height, vis
         landmark_x = coord[0]
         landmark_y = coord[1]
         landmark_visibility = visibility_array[key]
-        
+        '''
         if landmark_visibility < config.MODEL_CONFIG["MIN_DRAW_VISIBILITY"]:
             continue
-        
+        '''
         center_coordinates = (int(landmark_x * image_width), int(landmark_y * image_height))
 
         # Accessing MediaPipe's PoseLandmark enum values for comparison
@@ -91,10 +91,11 @@ def draw_connections_custom(image, landmarks_array, image_width, image_height, v
     for connection in config.POSE_CONNECTIONS:
         idx1, idx2 = connection
 
+        '''
         if visibility_array[idx1] < config.MODEL_CONFIG["MIN_DRAW_VISIBILITY"] \
            or visibility_array[idx2] < config.MODEL_CONFIG["MIN_DRAW_VISIBILITY"]:
             continue
-        
+        '''
         # Get color for the connection from the predefined map
         color = config.CONNECTIONS_COLORS.get(connection, None)
         if color is None: # Check if tuple order is reversed in map (for robustness)
